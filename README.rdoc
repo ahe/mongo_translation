@@ -1,0 +1,54 @@
+= MongoTranslation
+
+This Rails plugin for MongoMapper allows you to easily translate your documents in multiple languages.
+
+= Setup
+
+Once the plugin is installed, edit your config/environment.rb file to define your locales :
+
+  config.i18n.default_locale = :fr
+  LANGS = [:fr, :nl, :en]
+
+Then in your model, you have to include the MongoTranslation module and define the keys you want to translate :
+
+  class Article
+    include MongoMapper::Document
+    include MongoTranslation
+    
+    key :author, String  
+    key :title, String
+    key :content, String
+  
+    translates :title, :content
+  end
+
+The translates method will generate a ArticleTranslation model (EmbeddedDocument) with the required keys.
+
+= Use it!
+
+A call to article.title will load the title depending on the current locale :
+
+  article = Article.create(:author => 'antho', :title => 'test', :content => 'content')
+  translations = { 
+    'nl' => { 'title' => 'testNL', 'content' => 'contentNL' }, 
+    'en' => { 'title' => 'testEN', 'content' => 'contentEN' } 
+  }
+  article.create_or_update_translations(translations)
+  
+  # I18n.locale = :fr == default locale
+  article.title # => 'test'
+  
+  # I18n.locale = :nl
+  article.title # => 'testNL'
+  
+  # Specify the locale you want
+  article.title(:en) => 'testEN'
+  
+create_or_update_translations is just a helper offered by the plugin, but you can manipulate your translations manually :
+
+  article.article_translations << ArticleTranslation.new(:title => 'testNL', :content => 'contentNL')
+  article.article_translations << ArticleTranslation.new(:title => 'testEN', :content => 'contentEN')  
+
+
+
+Copyright (c) 2009 Anthony Heukmes, released under the MIT license
